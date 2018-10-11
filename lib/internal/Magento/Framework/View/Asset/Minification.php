@@ -143,12 +143,35 @@ class Minification
         if (!isset($this->configCache[self::XML_PATH_MINIFICATION_EXCLUDES][$contentType])) {
             $this->configCache[self::XML_PATH_MINIFICATION_EXCLUDES][$contentType] = [];
             $key = sprintf(self::XML_PATH_MINIFICATION_EXCLUDES, $contentType);
-            foreach (explode("\n", $this->scopeConfig->getValue($key, $this->scope)) as $exclude) {
+            $excludeValues = $this->getMinificationExcludeValues($key);
+            foreach ($excludeValues as $exclude) {
                 if (trim($exclude) != '') {
                     $this->configCache[self::XML_PATH_MINIFICATION_EXCLUDES][$contentType][] = trim($exclude);
                 }
             }
         }
         return $this->configCache[self::XML_PATH_MINIFICATION_EXCLUDES][$contentType];
+    }
+
+    /**
+     * Get minification exclude values from configuration
+     *
+     * @param string $key
+     * @return string[]
+     */
+    private function getMinificationExcludeValues($key)
+    {
+        $configValues = $this->scopeConfig->getValue($key, $this->scope) ?? [];
+        //value used to be a string separated by 'newline' separator so we need to convert it to array
+        if (!is_array($configValues)) {
+            $configValuesFromString = [];
+            foreach (explode("\n", $configValues) as $exclude) {
+                if (trim($exclude) != '') {
+                    $configValuesFromString[] = trim($exclude);
+                }
+            }
+            $configValues = $configValuesFromString;
+        }
+        return array_values($configValues);
     }
 }

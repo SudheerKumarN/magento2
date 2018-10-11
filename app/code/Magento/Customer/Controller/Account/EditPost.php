@@ -4,13 +4,18 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Customer\Controller\Account;
 
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Customer\Model\AuthenticationInterface;
 use Magento\Customer\Model\Customer\Mapper;
 use Magento\Customer\Model\EmailNotificationInterface;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\CsrfAwareActionInterface;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Customer\Api\AccountManagementInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
@@ -20,12 +25,14 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\InvalidEmailOrPasswordException;
 use Magento\Framework\Exception\State\UserLockedException;
+use Magento\Customer\Controller\AbstractAccount;
+use Magento\Framework\Phrase;
 
 /**
  * Class EditPost
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class EditPost extends \Magento\Customer\Controller\AbstractAccount
+class EditPost extends AbstractAccount implements CsrfAwareActionInterface, HttpPostActionInterface
 {
     /**
      * Form code for data extractor
@@ -131,6 +138,30 @@ class EditPost extends \Magento\Customer\Controller\AbstractAccount
     }
 
     /**
+     * @inheritDoc
+     */
+    public function createCsrfValidationException(
+        RequestInterface $request
+    ): ?InvalidRequestException {
+        /** @var Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $resultRedirect->setPath('*/*/edit');
+
+        return new InvalidRequestException(
+            $resultRedirect,
+            [new Phrase('Invalid Form Key. Please refresh the page.')]
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return null;
+    }
+
+    /**
      * Change customer email or password action
      *
      * @return \Magento\Framework\Controller\Result\Redirect
@@ -168,7 +199,8 @@ class EditPost extends \Magento\Customer\Controller\AbstractAccount
                 $this->messageManager->addError($e->getMessage());
             } catch (UserLockedException $e) {
                 $message = __(
-                    'You did not sign in correctly or your account is temporarily disabled.'
+                    'The account sign-in was incorrect or your account is disabled temporarily. '
+                    . 'Please wait and try again later.'
                 );
                 $this->session->logout();
                 $this->session->start();
@@ -188,7 +220,10 @@ class EditPost extends \Magento\Customer\Controller\AbstractAccount
             $this->session->setCustomerFormData($this->getRequest()->getPostValue());
         }
 
-        return $resultRedirect->setPath('*/*/edit');
+        /** @var Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
+        $resultRedirect->setPath('*/*/edit');
+        return $resultRedirect;
     }
 
     /**
@@ -287,7 +322,9 @@ class EditPost extends \Magento\Customer\Controller\AbstractAccount
                     $this->getRequest()->getPost('current_password')
                 );
             } catch (InvalidEmailOrPasswordException $e) {
-                throw new InvalidEmailOrPasswordException(__('The password doesn\'t match this account.'));
+                throw new InvalidEmailOrPasswordException(
+                    __("The password doesn't match this account. Verify the password and try again.")
+                );
             }
         }
     }

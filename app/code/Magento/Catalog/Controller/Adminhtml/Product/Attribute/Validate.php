@@ -4,11 +4,15 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
 namespace Magento\Catalog\Controller\Adminhtml\Product\Attribute;
 
+use Magento\Framework\App\Action\HttpGetActionInterface;
+use Magento\Framework\App\Action\HttpPostActionInterface as HttpPostActionInterface;
 use Magento\Framework\DataObject;
+use Magento\Catalog\Controller\Adminhtml\Product\Attribute as AttributeAction;
 
-class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
+class Validate extends AttributeAction implements HttpGetActionInterface, HttpPostActionInterface
 {
     const DEFAULT_MESSAGE_KEY = 'message';
 
@@ -91,7 +95,7 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
             $attributeSet->setEntityTypeId($this->_entityTypeId)->load($setName, 'attribute_set_name');
             if ($attributeSet->getId()) {
                 $setName = $this->_objectManager->get(\Magento\Framework\Escaper::class)->escapeHtml($setName);
-                $this->messageManager->addError(__('An attribute set named \'%1\' already exists.', $setName));
+                $this->messageManager->addErrorMessage(__('An attribute set named \'%1\' already exists.', $setName));
 
                 $layout = $this->layoutFactory->create();
                 $layout->initMessages();
@@ -110,6 +114,11 @@ class Validate extends \Magento\Catalog\Controller\Adminhtml\Product\Attribute
                 $options
             );
             $valueOptions = (isset($options['value']) && is_array($options['value'])) ? $options['value'] : [];
+            foreach (array_keys($valueOptions) as $key) {
+                if (!empty($options['delete'][$key])) {
+                    unset($valueOptions[$key]);
+                }
+            }
             $this->checkEmptyOption($response, $valueOptions);
         }
 

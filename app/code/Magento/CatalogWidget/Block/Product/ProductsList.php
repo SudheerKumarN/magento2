@@ -14,6 +14,7 @@ use Magento\Widget\Block\BlockInterface;
 
 /**
  * Catalog Products List widget block
+ *
  * Class ProductsList
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
@@ -130,7 +131,7 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function _construct()
     {
@@ -160,19 +161,21 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
 
         return [
             'CATALOG_PRODUCTS_LIST_WIDGET',
-            $this->getPriceCurrency()->getCurrencySymbol(),
+            $this->getPriceCurrency()->getCurrency()->getCode(),
             $this->_storeManager->getStore()->getId(),
             $this->_design->getDesignTheme()->getId(),
             $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_GROUP),
-            intval($this->getRequest()->getParam($this->getData('page_var_name'), 1)),
+            (int) $this->getRequest()->getParam($this->getData('page_var_name'), 1),
             $this->getProductsPerPage(),
             $conditions,
-            $this->json->serialize($this->getRequest()->getParams())
+            $this->json->serialize($this->getRequest()->getParams()),
+            $this->getTemplate(),
+            $this->getTitle()
         ];
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      * @SuppressWarnings(PHPMD.NPathComplexity)
      */
     public function getProductPriceHtml(
@@ -209,7 +212,7 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected function _beforeToHtml()
     {
@@ -247,6 +250,8 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
     }
 
     /**
+     * Returns conditions
+     *
      * @return \Magento\Rule\Model\Condition\Combine
      */
     protected function getConditions()
@@ -384,6 +389,8 @@ class ProductsList extends \Magento\Catalog\Block\Product\AbstractProduct implem
     }
 
     /**
+     * Returns PriceCurrencyInterface instance
+     *
      * @return PriceCurrencyInterface
      *
      * @deprecated 100.2.0

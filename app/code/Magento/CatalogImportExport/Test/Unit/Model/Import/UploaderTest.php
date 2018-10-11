@@ -103,7 +103,7 @@ class UploaderTest extends \PHPUnit\Framework\TestCase
     public function testMoveFileUrl($fileUrl, $expectedHost, $expectedFileName)
     {
         $destDir = 'var/dest/dir';
-        $expectedRelativeFilePath = $this->uploader->getTmpDir() . '/' . $expectedFileName;
+        $expectedRelativeFilePath = $expectedFileName;
         $this->directoryMock->expects($this->once())->method('isWritable')->with($destDir)->willReturn(true);
         $this->directoryMock->expects($this->any())->method('getRelativePath')->with($expectedRelativeFilePath);
         $this->directoryMock->expects($this->once())->method('getAbsolutePath')->with($destDir)
@@ -139,7 +139,7 @@ class UploaderTest extends \PHPUnit\Framework\TestCase
     {
         $destDir = 'var/dest/dir';
         $fileName = 'test_uploader_file';
-        $expectedRelativeFilePath = $this->uploader->getTmpDir() . '/' . $fileName;
+        $expectedRelativeFilePath = $fileName;
         $this->directoryMock->expects($this->once())->method('isWritable')->with($destDir)->willReturn(true);
         $this->directoryMock->expects($this->any())->method('getRelativePath')->with($expectedRelativeFilePath);
         $this->directoryMock->expects($this->once())->method('getAbsolutePath')->with($destDir)
@@ -193,6 +193,9 @@ class UploaderTest extends \PHPUnit\Framework\TestCase
         $this->assertNull($result);
     }
 
+    /**
+     * @return array
+     */
     public function moveFileUrlDriverPoolDataProvider()
     {
         return [
@@ -211,18 +214,41 @@ class UploaderTest extends \PHPUnit\Framework\TestCase
         ];
     }
 
+    /**
+     * @return array
+     */
     public function moveFileUrlDataProvider()
     {
         return [
             [
                 '$fileUrl' => 'http://test_uploader_file',
                 '$expectedHost' => 'test_uploader_file',
-                '$expectedFileName' => 'httptest_uploader_file',
+                '$expectedFileName' => 'test_uploader_file',
             ],
             [
                 '$fileUrl' => 'https://!:^&`;file',
                 '$expectedHost' => '!:^&`;file',
-                '$expectedFileName' => 'httpsfile',
+                '$expectedFileName' => 'file',
+            ],
+            [
+                '$fileUrl' => 'https://www.google.com/image.jpg',
+                '$expectedHost' => 'www.google.com/image.jpg',
+                '$expectedFileName' => 'image.jpg',
+            ],
+            [
+                '$fileUrl' => 'https://www.google.com/image.jpg?param=1',
+                '$expectedHost' => 'www.google.com/image.jpg?param=1',
+                '$expectedFileName' => 'image.jpg',
+            ],
+            [
+                '$fileUrl' => 'https://www.google.com/image.jpg?param=1&param=2',
+                '$expectedHost' => 'www.google.com/image.jpg?param=1&param=2',
+                '$expectedFileName' => 'image.jpg',
+            ],
+            [
+                '$fileUrl' => 'http://www.google.com/image.jpg?param=1&param=2',
+                '$expectedHost' => 'www.google.com/image.jpg?param=1&param=2',
+                '$expectedFileName' => 'image.jpg',
             ],
         ];
     }
